@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import fileinput
 
 
 def AWLN(cutoff_sp):
@@ -29,7 +30,7 @@ def AWLN(cutoff_sp):
         lambda x: f"[{x['#']}]40:48", axis=1)
     # Write instruction file
     df_ins.to_csv(ofile_ins, index=False, sep='\t')
-    return df
+    return df2
 
 
 def Delta_targets(cutoff_sp):
@@ -45,7 +46,7 @@ def Delta_targets(cutoff_sp):
 
     # read and process data
     df = pd.read_csv(ifile)
-    df_pst_final = pd.DataFrame()
+    df_delta = pd.DataFrame()
     for delta_target in list_delta_targets:
         df2 = pd.DataFrame()
         df2['Well Name'] = df.agg(
@@ -60,7 +61,7 @@ def Delta_targets(cutoff_sp):
         # write to file
         # df2.to_csv('../pst/obs4pst.csv', index=False, sep='\t')
         # print(f'Nobs = {df2.shape[0]}\n')
-        df_pst_final = pd.concat([df_pst_final, df2], axis=0)
+        df_delta = pd.concat([df_delta, df2], axis=0)
 
     # write ins df to the ins file
     # write first row of the ins file
@@ -75,15 +76,15 @@ def Delta_targets(cutoff_sp):
     df_ins['c2'] = '# #'
     # Write instruction file
     df_ins.to_csv(ofile_ins, mode='a', header=False, index=False, sep=',')
-    return df_pst_final
+    return df_delta
 
 
-def func_dirn_targets():
+def func_dirn_targets(ipst_2012_2014, pst_obs_cols):
     """
     Get pst block and ins files for dirn targets
     """
     # Get weigth from 2014-2014 pst control file
-    pst_obs_cols = ['Well Name', 'Val', 'Weight', 'Group']
+
     df_pst1224 = pd.read_csv(ipst_2012_2014, skiprows=2047, sep=' ',
                              nrows=cutoff_sp, skipinitialspace=True,
                              names=pst_obs_cols)
@@ -137,16 +138,17 @@ if __name__ == "__main__":
     # Define some init pars
     cutoff_sp = 113
     nsp = 384
+    pst_obs_cols = ['Well Name', 'Val', 'Weight', 'Group']
     # List of targets
     list_targets = ['Head_AWLN', 'Head_MAN', 'Delta_4-14',
                     'Delta_5-8', 'Delta_8-6', 'magn_AWLN', 'dirn_AWLN',
                     'Head_182B', '100C7_Vel', 'plm_vel', 'plm_dir',
                     'dirn_SRC', 'dirn2_SRC', 'dirn3_SRC', 'dirn4_SRC', 'dirn_CRV']
     ipst_2012_2014 = 'input/100BC_GWM_calib7b.pst'
-
+    df_pst_final = pd.DataFrame()
     # Get diff targets
-    # [1] AWLN target 1
 
+    # [1] AWLN target 1
     df_AWLN = AWLN(cutoff_sp)
 
     # [2] Head_MAN
@@ -154,13 +156,38 @@ if __name__ == "__main__":
     df_Head_MAN = Head_MAN(var)
 
     # [3] Delta_4-14, 'Delta_5-8', 'Delta_8-6',
-    Delta_targets(cutoff_sp)
+    df_delta = Delta_targets(cutoff_sp)
 
     # [12] dirn_* targets
-    df_dirn = func_dirn_targets()
+    df_dirn = func_dirn_targets(ipst_2012_2014, pst_obs_cols)
 
     # [] Read some groups that don't need to change 100C7_Vel, llm_vel, plm_dir
     # velocity1               5.11                  3          100C7_Vel
     # velocity2               3.68                  3          100C7_Vel
     #   plmvel               1.00                  9            plm_vel
     #   plmdir              45.00               0.21            plm_dir
+    df_no_changes_group = pd.read_csv(ipst_2012_2014, skiprows=1930, sep=' ',
+                                      nrows=4, skipinitialspace=True,
+                                      names=pst_obs_cols)
+    # Combine all groups
+    df_pst_final = pd.concat([df_AWLN, df_delta, df_dirn, df_no_changes_group])
+
+    # Save to file
+    df_pst_final.to_csv('input/100BC_GWM_calib7b_par2.pst', header=False,
+                        index=False, sep='\t')
+
+    # Get pst file content before obs group
+    filename = 'input/100BC_GWM_calib7b_par1.pst'
+    n_new_obs = df_pst_final.shape[0]
+    text_to_search = '2333'
+    replacement_text = str(n_new_obs)
+    with fileinput.FileInput(filename, inplace=True, backup='.bak') as file:
+        for line in file:
+            print(line.replace(text_to_search, replacement_text), end='')
+
+    # Combine three files
+    read_files = [f'input/100BC_GWM_calib7b_par{i+1}.pst' for i in range(3)]
+    with open("input/100BC_GWM_calib_2012_2020.pst", "wb") as outfile:
+        for f in read_files:
+            with open(f, "rb") as infile:
+                outfile.write(infile.read())
