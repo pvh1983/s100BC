@@ -17,7 +17,17 @@ def AWLN(cutoff_sp):
     df2['Group'] = 'Head_AWLN'
 
     # Assign weight
-    df2['Weight'][df['sp'] <= cutoff_sp] = 2
+    #df2['Weight'][df['sp'] <= cutoff_sp] = 2
+
+    # Get weight from old pst file
+    df_pst1224 = pd.read_csv(ipst_2012_2014, skiprows=155, sep=' ',
+                             nrows=2333, skipinitialspace=True,
+                             names=pst_obs_cols)
+    # Merge two df based on Well Name
+    df_merge = pd.merge(df2, df_pst1224, how='left', on=['Well Name'])
+    df_pst_final = df2.copy()
+    df_pst_final['Weight'] = df_merge['Weight_y']
+    df_pst_final['Weight'][df_pst_final['Weight'].isnull()] = 0
 
     # write to file
     # df2.to_csv('../pst/obs4pst.csv', index=False, sep='\t')
@@ -31,7 +41,7 @@ def AWLN(cutoff_sp):
         lambda x: f"[{x['#']}]40:48", axis=1)
     # Write instruction file
     df_ins.to_csv(ofile_ins, index=False, sep='\t')
-    return df2
+    return df_pst_final
 
 
 def Delta_targets(cutoff_sp):
