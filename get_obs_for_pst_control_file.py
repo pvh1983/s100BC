@@ -29,6 +29,13 @@ def AWLN(cutoff_sp):
     df_pst_final['Weight'] = df_merge['Weight_y']
     df_pst_final['Weight'][df_pst_final['Weight'].isnull()] = 0
 
+    # Special case for 199-B4-7
+    df_tmp = df_pst_final.copy()
+    df_tmp['WName'] = df_tmp.agg(
+        lambda x: f"{x['Well Name'].split('_')[0]}", axis=1)
+    dftmp2 = df_tmp[df_tmp['WName'] == '199-B4-7']
+    df_pst_final['Weight'].iloc[dftmp2.index[0]:dftmp2.index[13]] = 1
+
     # write to file
     # df2.to_csv('../pst/obs4pst.csv', index=False, sep='\t')
     print(f'Nobs = {df2.shape[0]}\n')
