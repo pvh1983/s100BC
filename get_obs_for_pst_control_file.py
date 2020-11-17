@@ -816,7 +816,8 @@ if __name__ == "__main__":
     # Get diff targets
 
     # [1] AWLN target 1
-    df_AWLN = AWLN(cutoff_sp)
+    # df_AWLN = AWLN(cutoff_sp)  # old
+    df_AWLN = AWLN_vMP()  # rev by MP 11/17/2020
 
     # MP [2] Head_MAN
     cutoff_man_obs = 241  # length of extended model: 1172
