@@ -51,6 +51,81 @@ def AWLN(cutoff_sp):
     return df_pst_final
 
 
+def AWLN_vMP():
+    ifile = f'../../final_deliverables/preprocess/head_2020/targets.csv'
+    ofile_ins = 'output/pst_ins/Head_AWLN.ins'
+
+    # read and process data
+    df = pd.read_csv(ifile)
+
+    df2 = pd.DataFrame()
+    df2['Well Name'] = df.agg(lambda x: f"{x['well']}_{x['sp']}", axis=1)
+    df2['Val'] = df['target']
+    df2['Weight'] = 0
+    df2['Group'] = 'Head_AWLN'
+
+    # Assign weight:
+    # Get weight from old pst file
+    df_pst1224 = pd.read_csv(ipst_2012_2014, skiprows=155, sep=' ',
+                             nrows=892, skipinitialspace=True,
+                             names=pst_obs_cols)  # 1005 if we include well 182-mon
+    # must fix index for 199-B4-18_1:
+    fix_idx = df_pst1224[df_pst1224['Weight'] > 120].index
+    for i in range(0, len(df_pst1224.columns)-1):
+        df_pst1224.iloc[fix_idx[0], i] = df_pst1224.iloc[fix_idx[0], i+1]
+    df_pst1224.iloc[fix_idx[0], 3] = 'Head_AWLN'
+
+    # Merge two df based on Well Name
+    df_merge = pd.merge(df2, df_pst1224, how='left', on=[
+                        'Well Name'], indicator=True)
+    df_pst_final = df2.copy()
+    df_pst_final['Weight'] = df_merge['Weight_y']
+    df_pst_final['Weight'][df_pst_final['Weight'].isnull()] = 0
+
+    # Find out which weights from pest file were not assigned properly. Issue with consistent well_name.
+    df_merge2 = pd.merge(df2, df_pst1224, how='right',
+                         on=['Well Name'], indicator=True)
+    diff = df_merge2[df_merge2['_merge'] == 'right_only']  # well, sp
+    # values of 0 for non-existent 199-b4-16 in old data, can ignore
+    diff = diff[diff.Weight_y != 0]
+    diff.reset_index(inplace=True, drop=True)
+
+    # For trouble wells, assign weights correctly to new pest file:
+    wells = ['199-B4-7', '199-B4-14', '199-B4-18',
+             '199-B5-6', '199-B5-8', '199-B8-6']
+    for well in wells:
+        idx1 = diff[diff['Well Name'].str.contains(well)].index.values
+        # print(len(idx1))
+        idx2 = df_pst_final[df_pst_final['Well Name'].str.contains(
+            well)].index.values
+        # find idx of last row with a weight of 1, if it exists:
+        if len(df_pst_final[(df_pst_final['Weight'] == 1) & (df_pst_final['Well Name'].str.contains(well))]) != 0:
+            idx3 = df_pst_final[(df_pst_final['Weight'] == 1) & (
+                df_pst_final['Well Name'].str.contains(well))].index.values[-1]
+
+        # Assign weights to the first number of values in new data from old data
+        if len(df_pst_final[(df_pst_final['Weight'] == 1) & (df_pst_final['Well Name'].str.contains(well))]) != 0:
+            df_pst_final.Weight.iloc[idx3+1:idx3 +
+                                     len(idx1)+1] = diff.Weight_y.iloc[idx1].tolist()
+        else:
+            df_pst_final.Weight.iloc[idx2[0:len(
+                idx1)]] = diff.Weight_y.iloc[idx1].tolist()
+
+    # write to file
+    df_pst_final.to_csv('output/pst_ins/obs4pst.csv', index=False, sep='\t')
+    print(f'Nobs = {df_pst_final.shape[0]}\n')
+
+    # write to ins file
+    df_ins = pd.DataFrame(columns=['pif', '#'])
+    df_ins['#'] = df_pst_final['Well Name']
+    df_ins['pif'] = 'l1'
+    df_ins['#'] = df_ins.agg(
+        lambda x: f"[{x['#']}]40:48", axis=1)
+    # Write instruction file
+    df_ins.to_csv(ofile_ins, index=False, sep='\t')
+    return df_pst_final
+
+
 def Delta_targets(cutoff_sp):
     # Define some input files/parameters
     ifile = '../../final_deliverables/preprocess/head_2020/deltas.csv'
