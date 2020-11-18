@@ -4,7 +4,7 @@ import fileinput
 from shutil import copyfile
 
 def Head_AWLN():
-    ifile = f'../../final_deliverables/preprocess/head_2020/targets.csv'
+    ifile = f'../../../../../final_deliverables/preprocess/head_2020/targets.csv'
     ofile_ins = 'output/pst_ins/Head_AWLN.ins'
 
     # read and process data
@@ -176,7 +176,7 @@ def Head_MAN():
 
 def magn_AWLN(cutoff_truex):
     # Define some input files/parameters
-    ifile = f'../../../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
+    ifile = f'../../../../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
     ofile_ins = 'output/pst_ins/magn_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
@@ -218,7 +218,7 @@ def magn_AWLN(cutoff_truex):
 
 def dirn_AWLN(cutoff_truex, ipst_2012_2014):
     # Define some input files/parameters
-    ifile = f'../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
+    ifile = f'../../../../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
     ofile_ins = 'output/pst_ins/dirn_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
@@ -348,8 +348,8 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
 
     df_dirn = pd.DataFrame(columns=pst_obs_cols)
     for i, dirn_target in enumerate(list_dirn_targets):
-        ifile = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}.csv'
-        ifile2 = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}_2014.csv'
+        ifile = f'../../../../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}.csv'
+        ifile2 = f'../../../../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}_2014.csv'
 
         df = pd.read_csv(ifile, names=["well", "date", "time", "head"])
         df_old = pd.read_csv(ifile2, names=["well", "date", "time", "head"])
@@ -390,21 +390,21 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
     return df_dirn
 
 if __name__ == "__main__":
-    # cd c:\Users\hpham\OneDrive - INTERA Inc\projects\020_100BC\hpham\scripts\
-    # Define some init pars
+    # cwd c:\Users\hpham\OneDrive - INTERA Inc\projects\020_100BC\hpham\scripts\
+
+    # Define some initial parameters:
     cutoff_sp = 113
     nsp = 384
-    pst_obs_cols = ['Well Name', 'Val', 'Weight', 'Group']
     # List of targets
     list_targets = ['Head_AWLN', 'Head_MAN', 'Delta_4-14',
                     'Delta_5-8', 'Delta_8-6', 'magn_AWLN', 'dirn_AWLN',
                     'Head_182B', '100C7_Vel', 'plm_vel', 'plm_dir',
                     'dirn_SRC', 'dirn2_SRC', 'dirn3_SRC', 'dirn4_SRC', 'dirn_CRV']
-    ipst_2012_2014 = 'input/100BC_GWM_calib7b.pst'
-    df_pst_final = pd.DataFrame(columns=pst_obs_cols)
+    ipst_2012_2014 = '../input/100BC_GWM_calib7b.pst'
+    pst_obs_cols = ['Well Name', 'Val', 'Weight', 'Group']
 
-    # [1] AWLN target 1
-    df_AWLN = Head_AWLN()  # rev by MP 11/17/2020
+    # [1] Head_AWLN
+    df_AWLN = Head_AWLN()
 
     # [2] Head_MAN
     # cutoff_man_obs = 241  # length of extended model: 1172
@@ -422,14 +422,15 @@ if __name__ == "__main__":
     # using cutoff_truex for overlapping SPs - source_dirn3.csv
     df_dirn3_SRC = dirn3_SRC(cutoff_truex)
 
-    # [3] Delta_4-14, 'Delta_5-8', 'Delta_8-6',
+    # [6] Delta_4-14, 'Delta_5-8', 'Delta_8-6',
     df_delta = Delta_targets(cutoff_sp)
 
-    # [] Read some groups that don't need to change 100C7_Vel, llm_vel, plm_dir
+    # [7] Read some groups that don't need to change 100C7_Vel, llm_vel, plm_dir
     # velocity1               5.11                  3          100C7_Vel
     # velocity2               3.68                  3          100C7_Vel
     #   plmvel               1.00                  9            plm_vel
     #   plmdir              45.00               0.21            plm_dir
+    
     df_no_changes_group = pd.read_csv(ipst_2012_2014, skiprows=1930, sep=' ',
                                       nrows=4, skipinitialspace=True,
                                       names=pst_obs_cols)
@@ -438,7 +439,9 @@ if __name__ == "__main__":
     df_dirn2 = df_dirn[df_dirn['Group'] == 'dirn2_SRC']
     df_dirn4 = df_dirn[df_dirn['Group'] == 'dirn4_SRC']
     df_CRV = df_dirn[df_dirn['Group'] == 'dirn_CRV']
-    df_pst_final = pd.concat(  # df_Head_MAN,
+
+    df_pst_final = pd.DataFrame(columns=pst_obs_cols)
+    df_pst_final = pd.concat(
         [df_AWLN,  df_Head_MAN, df_delta, df_magn_AWLN, df_dirn_AWLN,
          df_no_changes_group, df_dirn1, df_dirn2, df_dirn3_SRC, df_dirn4, df_CRV], axis=0)
 
