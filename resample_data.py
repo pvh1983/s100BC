@@ -12,3 +12,5 @@ df_daily.to_csv('output/PRD_gage_height_daily.csv')
 
 df_hourly = df.resample('h', on='datetime').mean()  # resample to daily
 df_hourly.to_csv('output/PRD_gage_height_hourly.csv')
+
+# Testing
