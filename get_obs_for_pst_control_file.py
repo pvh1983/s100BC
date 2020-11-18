@@ -4,8 +4,8 @@ import fileinput
 from shutil import copyfile
 
 def Head_AWLN():
-    ifile = f'../../../../../final_deliverables/preprocess/head_2020/targets.csv'
-    ofile_ins = 'output/pst_ins/Head_AWLN.ins'
+    ifile = f'../../final_deliverables/preprocess/head_2020/targets.csv'
+    ofile_ins = '../output/pst_ins/Head_AWLN.ins'
 
     # read and process data
     df = pd.read_csv(ifile)
@@ -64,7 +64,7 @@ def Head_AWLN():
                 idx1)]] = diff.Weight_y.iloc[idx1].tolist()
 
     # write to file
-    df_pst_final.to_csv('output/pst_ins/obs4pst.csv', index=False, sep='\t')
+    df_pst_final.to_csv('../output/pst_ins/obs4pst.csv', index=False, sep='\t')
     print(f'Nobs = {df_pst_final.shape[0]}\n')
 
     # write to ins file
@@ -80,7 +80,7 @@ def Head_AWLN():
 def Delta_targets(cutoff_sp):
     # Define some input files/parameters
     ifile = '../../final_deliverables/preprocess/head_2020/deltas.csv'
-    ofile_ins = 'output/pst_ins/Deltas_AWLN.ins'
+    ofile_ins = '../output/pst_ins/Deltas_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -128,7 +128,7 @@ def Delta_targets(cutoff_sp):
 def Head_MAN():
     ifile = f'../../final_deliverables/Head_MAN/Bore_Sample_File_in_model_manual.csv'
     ifile2 = f'../../final_deliverables/Head_MAN/Bore_Sample_File_in_model_manual_2014.csv'
-    ofile_ins = 'output/pst_ins/Head_MAN.ins'
+    ofile_ins = '../output/pst_ins/Head_MAN.ins'
 
     # read and process new and old data
     df = pd.read_csv(ifile, names=["well", "date", "time", "head"])
@@ -160,7 +160,7 @@ def Head_MAN():
     df3['Val'] = df3['Val'].round(3)
 
     # write to file
-    # df3.to_csv('output/pst_main/head_MAN4pst.csv', index=False, sep='\t')
+    # df3.to_csv('../output/pst_ins/head_MAN4pst.csv', index=False, sep='\t')
     # print(f'Nobs = {df3.shape[0]}\n')
 
     # write to ins file
@@ -176,8 +176,8 @@ def Head_MAN():
 
 def magn_AWLN(cutoff_truex):
     # Define some input files/parameters
-    ifile = f'../../../../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
-    ofile_ins = 'output/pst_ins/magn_AWLN.ins'
+    ifile = f'../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
+    ofile_ins = '../output/pst_ins/magn_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -198,7 +198,7 @@ def magn_AWLN(cutoff_truex):
     df2['Weight'][df['num'] <= cutoff_truex] = 10000
 
     # write to file
-    #df2.to_csv('output/pst_main/magn_AWLN4pst.csv', index=False, sep='\t')
+    #df2.to_csv('../output/pst_ins/magn_AWLN4pst.csv', index=False, sep='\t')
     #print(f'Nobs = {df2.shape[0]}\n')
 
     # write ins df to the ins file
@@ -218,8 +218,8 @@ def magn_AWLN(cutoff_truex):
 
 def dirn_AWLN(cutoff_truex, ipst_2012_2014):
     # Define some input files/parameters
-    ifile = f'../../../../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
-    ofile_ins = 'output/pst_ins/dirn_AWLN.ins'
+    ifile = f'../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
+    ofile_ins = '../output/pst_ins/dirn_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -247,7 +247,7 @@ def dirn_AWLN(cutoff_truex, ipst_2012_2014):
     df2['Val'].iloc[df2[df2['Weight'] == 0.03].index] = 20.00000
 
     # write to file
-    # df2.to_csv('output/pst_main/dirn_AWLN4pst.csv', index=False, sep='\t')
+    # df2.to_csv('../output/pst_ins/dirn_AWLN4pst.csv', index=False, sep='\t')
     # print(f'Nobs = {df2.shape[0]}\n')
 
     # write ins df to the ins file
@@ -270,7 +270,7 @@ def dirn3_SRC(cutoff_truex):
     # Define some input files/parameters
     ifile = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_100C7_1_dirn3.csv'
     ifile2 = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_100C7_1_dirn3_2014.csv'
-    ofile_ins = 'output/pst_ins/dirn_src_100C7_1_3.ins'
+    ofile_ins = '../output/pst_ins/dirn_src_100C7_1_3.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -303,7 +303,7 @@ def dirn3_SRC(cutoff_truex):
     # cut values to n_dirn3 --  need to confirm with Helal.
     df4 = df3.iloc[0:n_dirn3]
     # write to file
-    #df4.to_csv('output/pst_main/dirn3_src4pst.csv', index=False, sep='\t')
+    #df4.to_csv('../output/pst_ins/dirn3_src4pst.csv', index=False, sep='\t')
     #print(f'Nobs = {df4.shape[0]}\n')
 
     # write ins df to the ins file
@@ -348,8 +348,8 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
 
     df_dirn = pd.DataFrame(columns=pst_obs_cols)
     for i, dirn_target in enumerate(list_dirn_targets):
-        ifile = f'../../../../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}.csv'
-        ifile2 = f'../../../../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}_2014.csv'
+        ifile = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}.csv'
+        ifile2 = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_{dic_ifile[dirn_target]}_2014.csv'
 
         df = pd.read_csv(ifile, names=["well", "date", "time", "head"])
         df_old = pd.read_csv(ifile2, names=["well", "date", "time", "head"])
@@ -369,11 +369,11 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
             df_dirn_tmp['Weight'].iloc[0:cutoff_sp] = df_pst1224['Weight']
         # Combine dfs
         df_dirn = pd.concat([df_dirn, df_dirn_tmp], axis=0)
-        df_dirn.to_csv('output/pst_ins/df_dirn.csv')
+        df_dirn.to_csv('../output/pst_ins/df_dirn.csv')
 
         # write ins df to the ins file
         # write first row of the ins file
-        ofile_ins = f'output/pst_ins/{dic_ofile[dirn_target]}.ins'
+        ofile_ins = f'../output/pst_ins/{dic_ofile[dirn_target]}.ins'
         fid = open(ofile_ins, 'w')
         fid.write('pif #\n')
         fid.close()
