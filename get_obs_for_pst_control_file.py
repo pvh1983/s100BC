@@ -5,7 +5,7 @@ from shutil import copyfile
 
 def Head_AWLN():
     ifile = f'../../final_deliverables/preprocess/head_2020/targets.csv'
-    ofile_ins = '../output/pst_ins/Head_AWLN.ins'
+    ofile_ins = 'output/pst_ins/Head_AWLN.ins'
 
     # read and process data
     df = pd.read_csv(ifile)
@@ -63,8 +63,22 @@ def Head_AWLN():
             df_pst_final.Weight.iloc[idx2[0:len(
                 idx1)]] = diff.Weight_y.iloc[idx1].tolist()
 
+    # *extended model weight assignment*
+    wells = ['199-B2-14','199-B3-46', '199-B3-47', '199-B3-51', '199-B4-18', '199-B4-16','199-B4-7', '199-B4-14',
+             '199-B4-18','199-B5-8', '199-B8-6', '199-B3-50', '199-B4-8','199-B5-1','199-B5-6','199-B5-13',
+             '199-B5-13','199-B8-9','199-B9-3','699-71-77']
+    
+    new_weights_dic = {'199-B2-14':2,'199-B3-46':2, '199-B3-47':2, '199-B3-51':2,
+     '199-B4-7':1, '199-B4-14':1, '199-B4-16': 1, '199-B4-18':1,'199-B5-8':1, '199-B8-6':1,
+     '199-B3-50':1, '199-B4-8':1,'199-B5-1':1,'199-B5-6':1,'199-B5-13':1,
+     '199-B5-13':1,'199-B8-9':1,'199-B9-3':1,'699-71-77':1}
+    
+    for well in wells:
+        new_weights = df_pst_final[(df_pst_final['Weight'] == 0) & (df_pst_final['Well Name'].str.contains(well))].index.values
+        df_pst_final['Weight'].iloc[new_weights] = new_weights_dic[well]
+
     # write to file
-    df_pst_final.to_csv('../output/pst_ins/obs4pst.csv', index=False, sep='\t')
+    df_pst_final.to_csv('output/pst_ins/head_AWLN4pst.csv', index=False, sep='\t')
     print(f'Nobs = {df_pst_final.shape[0]}\n')
 
     # write to ins file
@@ -80,7 +94,7 @@ def Head_AWLN():
 def Delta_targets(cutoff_sp):
     # Define some input files/parameters
     ifile = '../../final_deliverables/preprocess/head_2020/deltas.csv'
-    ofile_ins = '../output/pst_ins/Deltas_AWLN.ins'
+    ofile_ins = 'output/pst_ins/Deltas_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -108,10 +122,15 @@ def Delta_targets(cutoff_sp):
 
         # Assign weight
         df2['Weight'][df['sp'] <= cutoff_sp] = 2
+        df2.reset_index(inplace=True, drop=True)
+        
+        # *extended model weight assignment*
+        new_weights = df2[df2['Weight'] == 0].index.values
+        df2['Weight'].iloc[new_weights] = 2
 
         # write to file
-        # df2.to_csv('../pst/obs4pst.csv', index=False, sep='\t')
-        # print(f'Nobs = {df2.shape[0]}\n')
+        df2.to_csv('output/pst_ins/deltas4pst.csv', index=False, sep='\t')
+        print(f'Nobs = {df2.shape[0]}\n')
         df_delta = pd.concat([df_delta, df2], axis=0)
 
         # write ins df to the ins file
@@ -128,7 +147,7 @@ def Delta_targets(cutoff_sp):
 def Head_MAN():
     ifile = f'../../final_deliverables/Head_MAN/Bore_Sample_File_in_model_manual.csv'
     ifile2 = f'../../final_deliverables/Head_MAN/Bore_Sample_File_in_model_manual_2014.csv'
-    ofile_ins = '../output/pst_ins/Head_MAN.ins'
+    ofile_ins = 'output/pst_ins/Head_MAN.ins'
 
     # read and process new and old data
     df = pd.read_csv(ifile, names=["well", "date", "time", "head"])
@@ -144,7 +163,7 @@ def Head_MAN():
 
     df3 = pd.DataFrame()
     df3['Well Name'] = df2.agg(lambda x: f"MAN{x['num']}", axis=1)
-    df3['Val'] = 0
+    df3['Val'] = df2['head'].round(3)
     df3['Weight'] = 0
     df3['Group'] = 'Head_MAN'
 
@@ -154,14 +173,15 @@ def Head_MAN():
 
     # Assign weight and value
     df3['Weight'][df2['_merge'] == 'both'] = 1
-    df3['Weight'][(df2['well'] == '199-B4-14') & (df2['date'] ==
-                                                  '4/8/2013')] = 0.01  # special case - low head
-    df3['Val'][df2['_merge'] == 'both'] = vals
-    df3['Val'] = df3['Val'].round(3)
+    df3['Weight'][(df2['well'] == '199-B4-14') & (df2['date'] =='4/8/2013')] = 0.01  # special case - low head (<119)
+
+    # *extended model weight assignment*
+    new_weights = df3[df3['Weight'] == 0].index.values
+    df3['Weight'].iloc[new_weights] = 1 
 
     # write to file
-    # df3.to_csv('../output/pst_ins/head_MAN4pst.csv', index=False, sep='\t')
-    # print(f'Nobs = {df3.shape[0]}\n')
+    df3.to_csv('output/pst_ins/head_MAN4pst.csv', index=False, sep='\t')
+    print(f'Nobs = {df3.shape[0]}\n')
 
     # write to ins file
     df_ins = pd.DataFrame(columns=['pif', '#'])
@@ -177,7 +197,7 @@ def Head_MAN():
 def magn_AWLN(cutoff_truex):
     # Define some input files/parameters
     ifile = f'../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
-    ofile_ins = '../output/pst_ins/magn_AWLN.ins'
+    ofile_ins = 'output/pst_ins/magn_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -197,12 +217,15 @@ def magn_AWLN(cutoff_truex):
     # Assign weight
     df2['Weight'][df['num'] <= cutoff_truex] = 10000
 
+    # *extended model weight assignment*
+    new_weights = df2[df2['Weight'] == 0].index.values
+    df2['Weight'].iloc[new_weights] = 10000 
+
     # write to file
-    #df2.to_csv('../output/pst_ins/magn_AWLN4pst.csv', index=False, sep='\t')
-    #print(f'Nobs = {df2.shape[0]}\n')
+    df2.to_csv('output/pst_ins/magn_AWLN4pst.csv', index=False, sep='\t')
+    print(f'Nobs = {df2.shape[0]}\n')
 
     # write ins df to the ins file
-    # write first row of the ins file
     fid = open(ofile_ins, 'w')
     fid.write('pif #\n')
     fid.close()
@@ -216,10 +239,10 @@ def magn_AWLN(cutoff_truex):
     df_ins.to_csv(ofile_ins, mode='a', header=False, index=False, sep=',')
     return df2
 
-def dirn_AWLN(cutoff_truex, ipst_2012_2014):
+def dirn_AWLN(cutoff_truex, ipst_2012_2014): # weights need updating
     # Define some input files/parameters
     ifile = f'../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
-    ofile_ins = '../output/pst_ins/dirn_AWLN.ins'
+    ofile_ins = 'output/pst_ins/dirn_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -247,8 +270,8 @@ def dirn_AWLN(cutoff_truex, ipst_2012_2014):
     df2['Val'].iloc[df2[df2['Weight'] == 0.03].index] = 20.00000
 
     # write to file
-    # df2.to_csv('../output/pst_ins/dirn_AWLN4pst.csv', index=False, sep='\t')
-    # print(f'Nobs = {df2.shape[0]}\n')
+    df2.to_csv('output/pst_ins/dirn_AWLN4pst.csv', index=False, sep='\t')
+    print(f'Nobs = {df2.shape[0]}\n')
 
     # write ins df to the ins file
     # write first row of the ins file
@@ -270,7 +293,7 @@ def dirn3_SRC(cutoff_truex):
     # Define some input files/parameters
     ifile = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_100C7_1_dirn3.csv'
     ifile2 = f'../../final_deliverables/sdirn/Bore_Sample_File_in_model_100C7_1_dirn3_2014.csv'
-    ofile_ins = '../output/pst_ins/dirn_src_100C7_1_3.ins'
+    ofile_ins = 'output/pst_ins/dirn_src_100C7_1_3.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
         os.remove(ofile_ins)
@@ -299,12 +322,16 @@ def dirn3_SRC(cutoff_truex):
     # df3['Weight'][df2['_merge'] == 'both'] = 0.04
     df3['Weight'][df['num'] <= cutoff_truex] = 0.04
 
-    n_dirn3 = 175  # extended model overlapping SPs from truex network
-    # cut values to n_dirn3 --  need to confirm with Helal.
+    n_dirn3 = 175  # extended model length of src_dirn3.csv
     df4 = df3.iloc[0:n_dirn3]
+    
+    # *extended model weight assignment*
+    new_weights = df4[df4['Weight'] == 0].index.values
+    df4['Weight'].iloc[new_weights] = 0.04
+    
     # write to file
-    #df4.to_csv('../output/pst_ins/dirn3_src4pst.csv', index=False, sep='\t')
-    #print(f'Nobs = {df4.shape[0]}\n')
+    df4.to_csv('output/pst_ins/dirn3_src4pst.csv', index=False, sep='\t')
+    print(f'Nobs = {df4.shape[0]}\n')
 
     # write ins df to the ins file
     # write first row of the ins file
@@ -319,7 +346,7 @@ def dirn3_SRC(cutoff_truex):
     df_ins['c2'] = '# #'
     df_ins['c3'] = '# #'
 
-    # cut values to n_dirn3 --  need to confirm with Helal.
+    # cut values to src_dirn3 --  need to confirm with Helal.
     df_ins2 = df_ins.iloc[0:n_dirn3]
     # Write instruction file
     df_ins2.to_csv(ofile_ins, mode='a', header=False, index=False, sep=',')
@@ -363,17 +390,21 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
         df_dirn_tmp['Group'] = dirn_target
         df_dirn_tmp['Weight'] = 0
         # Assign weight to 2012-2014 data only:
-        df_dirn_tmp['Weight'][df2['_merge'] ==
-                              'both'] = dic_dirn_targets[dirn_target][1]
+        df_dirn_tmp['Weight'][df2['_merge'] =='both'] = dic_dirn_targets[dirn_target][1]
         if dirn_target == 'dirn2_SRC':  # a special case
             df_dirn_tmp['Weight'].iloc[0:cutoff_sp] = df_pst1224['Weight']
-        # Combine dfs
+
+        # *extended model weight assignment*
+        new_weights = df_dirn_tmp[df_dirn_tmp['Weight'] == 0].index.values
+        df_dirn_tmp['Weight'].iloc[new_weights] = dic_dirn_targets[dirn_target][1]
+
+        # Combine dfs and save
         df_dirn = pd.concat([df_dirn, df_dirn_tmp], axis=0)
-        df_dirn.to_csv('../output/pst_ins/df_dirn.csv')
+        df_dirn.to_csv('output/pst_ins/df_dirns_src4pst.csv')
 
         # write ins df to the ins file
         # write first row of the ins file
-        ofile_ins = f'../output/pst_ins/{dic_ofile[dirn_target]}.ins'
+        ofile_ins = f'output/pst_ins/{dic_ofile[dirn_target]}.ins'
         fid = open(ofile_ins, 'w')
         fid.write('pif #\n')
         fid.close()
@@ -386,7 +417,6 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
         df_ins['c3'] = '# #'
         df_ins.to_csv(ofile_ins, mode='a', header=False, index=False, sep=',')
         print(f'Saved {ofile_ins}\n')
-
     return df_dirn
 
 if __name__ == "__main__":
@@ -395,12 +425,13 @@ if __name__ == "__main__":
     # Define some initial parameters:
     cutoff_sp = 113
     nsp = 384
+    cutoff_truex = 102  # length of extended model: 285
     # List of targets
     list_targets = ['Head_AWLN', 'Head_MAN', 'Delta_4-14',
                     'Delta_5-8', 'Delta_8-6', 'magn_AWLN', 'dirn_AWLN',
                     'Head_182B', '100C7_Vel', 'plm_vel', 'plm_dir',
                     'dirn_SRC', 'dirn2_SRC', 'dirn3_SRC', 'dirn4_SRC', 'dirn_CRV']
-    ipst_2012_2014 = '../input/100BC_GWM_calib7b.pst'
+    ipst_2012_2014 = 'input/100BC_GWM_calib7b.pst'
     pst_obs_cols = ['Well Name', 'Val', 'Weight', 'Group']
 
     # [1] Head_AWLN
@@ -411,7 +442,7 @@ if __name__ == "__main__":
     df_Head_MAN = Head_MAN()
 
     # [3] magn_AWLN and dirns_AWLN
-    cutoff_truex = 102  # length of extended model: 285
+
     df_magn_AWLN = magn_AWLN(cutoff_truex)
     df_dirn_AWLN = dirn_AWLN(cutoff_truex, ipst_2012_2014)
 
