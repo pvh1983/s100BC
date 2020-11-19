@@ -478,6 +478,8 @@ if __name__ == "__main__":
     df_no_changes_group = pd.read_csv(ipst_2012_2014, skiprows=1930, sep=' ',
                                       nrows=4, skipinitialspace=True,
                                       names=pst_obs_cols)
+    df_no_changes_group['Group'] = df_no_changes_group['Group'].str.replace("\t"," ").str.replace(" ","")     #fix plm_vel\t\t:
+
     # Combine all groups
     df_dirn1 = df_dirn[df_dirn['Group'] == 'dirn_SRC']
     df_dirn2 = df_dirn[df_dirn['Group'] == 'dirn2_SRC']
