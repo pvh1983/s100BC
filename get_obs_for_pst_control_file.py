@@ -65,13 +65,13 @@ def Head_AWLN():
 
     # *extended model weight assignment*
     wells = ['199-B2-14','199-B3-46', '199-B3-47', '199-B3-51', '199-B4-18', '199-B4-16','199-B4-7', '199-B4-14',
-             '199-B4-18','199-B5-8', '199-B8-6', '199-B3-50', '199-B4-8','199-B5-1','199-B5-6','199-B5-13',
-             '199-B5-13','199-B8-9','199-B9-3','699-71-77']
+              '199-B4-18','199-B5-8', '199-B8-6', '199-B3-50', '199-B4-8','199-B5-1','199-B5-6','199-B5-13',
+              '199-B5-13','199-B8-9','199-B9-3','699-71-77']
     
     new_weights_dic = {'199-B2-14':2,'199-B3-46':2, '199-B3-47':2, '199-B3-51':2,
-     '199-B4-7':1, '199-B4-14':1, '199-B4-16': 1, '199-B4-18':1,'199-B5-8':1, '199-B8-6':1,
-     '199-B3-50':1, '199-B4-8':1,'199-B5-1':1,'199-B5-6':1,'199-B5-13':1,
-     '199-B5-13':1,'199-B8-9':1,'199-B9-3':1,'699-71-77':1}
+      '199-B4-7':1, '199-B4-14':1, '199-B4-16': 1, '199-B4-18':1,'199-B5-8':1, '199-B8-6':1,
+      '199-B3-50':1, '199-B4-8':1,'199-B5-1':1,'199-B5-6':1,'199-B5-13':1,
+      '199-B5-13':1,'199-B8-9':1,'199-B9-3':1,'699-71-77':1}
     
     for well in wells:
         new_weights = df_pst_final[(df_pst_final['Weight'] == 0) & (df_pst_final['Well Name'].str.contains(well))].index.values
@@ -267,7 +267,15 @@ def dirn_AWLN(cutoff_truex, ipst_2012_2014): # weights need updating
     df2['Weight'].iloc[0:cutoff_truex] = df_pst1224['Weight'].round(2)
 
     # make df2['Val'] = 20 for dirn 40-42, 45-49, 77-82
-    df2['Val'].iloc[df2[df2['Weight'] == 0.03].index] = 20.00000
+    df2['Val'].iloc[df2[df2['Weight'] == 0.03].index] = 20.00000 #assign value of 20 to values > 230
+
+    # *extended model weight assignment*
+    nw1 = df2[(df2['Weight'] == 0) & (df2['Val'] <= 180)].index.values #assign a weight of 0.06 to values < 180
+    nw2 = df2[df2['Val'] <= 18].index.values #assign a weight of 0.1 to values < 18
+    nw3 = df2[(df2['Weight'] == 0) & (df2['Val'] > 180)].index.values #assign a weight of 0.03 to values > 180
+    df2['Weight'].iloc[nw1] = 0.06
+    df2['Weight'].iloc[nw2] = 0.1
+    df2['Weight'].iloc[nw3] = 0.03
 
     # write to file
     df2.to_csv('output/pst_ins/dirn_AWLN4pst.csv', index=False, sep='\t')
@@ -391,12 +399,17 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
         df_dirn_tmp['Weight'] = 0
         # Assign weight to 2012-2014 data only:
         df_dirn_tmp['Weight'][df2['_merge'] =='both'] = dic_dirn_targets[dirn_target][1]
-        if dirn_target == 'dirn2_SRC':  # a special case
-            df_dirn_tmp['Weight'].iloc[0:cutoff_sp] = df_pst1224['Weight']
-
+        
         # *extended model weight assignment*
         new_weights = df_dirn_tmp[df_dirn_tmp['Weight'] == 0].index.values
         df_dirn_tmp['Weight'].iloc[new_weights] = dic_dirn_targets[dirn_target][1]
+        
+        if dirn_target == 'dirn2_SRC':  # a special case
+            # nw2 = df_dirn_tmp[df_dirn_tmp['Weight'] == 0].index.values
+            df_dirn_tmp['Weight'].iloc[0:cutoff_sp] = df_pst1224['Weight']
+            #extended model weight assignment to dirn2:
+            df_dirn_tmp['Weight'].iloc[cutoff_sp:len(df_dirn_tmp)] = 0.01
+            # df_dirn_tmp['Weight'].iloc[new_weights] = 0.01
 
         # Combine dfs and save
         df_dirn = pd.concat([df_dirn, df_dirn_tmp], axis=0)
