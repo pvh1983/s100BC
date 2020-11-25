@@ -65,13 +65,13 @@ def Head_AWLN():
 
     # *extended model weight assignment*
     wells = ['199-B2-14','199-B3-46', '199-B3-47', '199-B3-51', '199-B4-18', '199-B4-16','199-B4-7', '199-B4-14',
-              '199-B4-18','199-B5-8', '199-B8-6', '199-B3-50', '199-B4-8','199-B5-1','199-B5-6','199-B5-13',
+              '199-B5-8', '199-B8-6', '199-B3-50', '199-B4-8','199-B5-1','199-B5-6',
               '199-B5-13','199-B8-9','199-B9-3','699-71-77']
     
     new_weights_dic = {'199-B2-14':2,'199-B3-46':2, '199-B3-47':2, '199-B3-51':2,
-      '199-B4-7':1, '199-B4-14':1, '199-B4-16': 1, '199-B4-18':1,'199-B5-8':1, '199-B8-6':1,
-      '199-B3-50':1, '199-B4-8':1,'199-B5-1':1,'199-B5-6':1,'199-B5-13':1,
-      '199-B5-13':1,'199-B8-9':1,'199-B9-3':1,'699-71-77':1}
+      '199-B4-18':1, '199-B4-16': 1, '199-B4-7':1, '199-B4-14':1, '199-B5-8':1, '199-B8-6':1,
+      '199-B3-50':2, '199-B4-8':1,'199-B5-1':1,'199-B5-6':1,'199-B5-13':1,
+      '199-B8-9':1,'199-B9-3':1,'699-71-77':2}
     
     for well in wells:
         new_weights = df_pst_final[(df_pst_final['Weight'] == 0) & (df_pst_final['Well Name'].str.contains(well))].index.values
@@ -145,8 +145,8 @@ def Delta_targets(cutoff_sp):
     return df_delta
 
 def Head_MAN():
-    ifile = f'../../final_deliverables/Head_MAN/Bore_Sample_File_in_model_manual.csv'
-    ifile2 = f'../../final_deliverables/Head_MAN/Bore_Sample_File_in_model_manual_2014.csv'
+    ifile = f'../../final_deliverables/Head_Manual/Bore_Sample_File_in_model_manual.csv'
+    ifile2 = f'../../final_deliverables/Head_Manual/Bore_Sample_File_in_model_manual_2014.csv'
     ofile_ins = 'output/pst_ins/Head_MAN.ins'
 
     # read and process new and old data
@@ -242,6 +242,7 @@ def magn_AWLN(cutoff_truex):
 def dirn_AWLN(cutoff_truex, ipst_2012_2014): # weights need updating
     # Define some input files/parameters
     ifile = f'../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2020_magdir.csv'
+    ifile2 = f'../../final_deliverables/preprocess/Truex_well_network_2020/TruexWells_all_data_2012-2014_magdir.csv'
     ofile_ins = 'output/pst_ins/dirn_AWLN.ins'
     # Delete the old file if existing
     if os.path.isfile(ofile_ins):
@@ -254,6 +255,7 @@ def dirn_AWLN(cutoff_truex, ipst_2012_2014): # weights need updating
                              names=pst_obs_cols)
     # read and process data
     df = pd.read_csv(ifile)
+    df_old = pd.read_csv(ifile2)
     df['num'] = list(range(1, len(df)+1))
 
     df2 = pd.DataFrame()
@@ -270,15 +272,16 @@ def dirn_AWLN(cutoff_truex, ipst_2012_2014): # weights need updating
     df2['Val'].iloc[df2[df2['Weight'] == 0.03].index] = 20.00000 #assign value of 20 to values > 230
 
     # *extended model weight assignment*
-    nw1 = df2[(df2['Weight'] == 0) & (df2['Val'] <= 180)].index.values #assign a weight of 0.06 to values < 180
-    nw2 = df2[df2['Val'] <= 18].index.values #assign a weight of 0.1 to values < 18
-    nw3 = df2[(df2['Weight'] == 0) & (df2['Val'] > 180)].index.values #assign a weight of 0.03 to values > 180
-    df2['Weight'].iloc[nw1] = 0.06
-    df2['Weight'].iloc[nw2] = 0.1
-    df2['Weight'].iloc[nw3] = 0.03
+    df3 = df2.copy()
+    nw1 = df3[(df3['Weight'] == 0) & (df3['Val'] <= 180)].index.values #assign a weight of 0.06 to values < 180
+    nw2 = df3[df3['Val'] <= 18].index.values #assign a weight of 0.1 to values < 18
+    nw3 = df3[(df3['Weight'] == 0) & (df3['Val'] > 180)].index.values #assign a weight of 0.03 to values > 180
+    df3['Weight'].iloc[nw1] = 0.06
+    df3['Weight'].iloc[nw2] = 0.1
+    df3['Weight'].iloc[nw3] = 0
 
     # write to file
-    df2.to_csv('output/pst_ins/dirn_AWLN4pst.csv', index=False, sep='\t')
+    df3.to_csv('output/pst_ins/dirn_AWLN4pst.csv', index=False, sep='\t')
     print(f'Nobs = {df2.shape[0]}\n')
 
     # write ins df to the ins file
