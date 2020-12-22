@@ -364,6 +364,9 @@ def dirn3_SRC(cutoff_truex):
     return df4
 
 def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
+    
+
+
     """
     Get pst block and ins files for dirn targets
     """
@@ -435,6 +438,40 @@ def func_dirn_targets(ipst_2012_2014, pst_obs_cols, nsp):
         print(f'Saved {ofile_ins}\n')
     return df_dirn
 
+def Cr_obs():
+    # Define some input files/parameters
+    ifile = f'../../final_deliverables/Cr_obs_AWLN/Cr_concentration_with_avg_dups.csv'
+    ofile_ins = 'output/pst_ins/Cr_obs.ins'
+    # Delete the old file if existing
+    if os.path.isfile(ofile_ins):
+        os.remove(ofile_ins)
+        print(f'Removed {ofile_ins}\n')
+
+    # read and process new and old data
+    df = pd.read_csv(ifile, names=["well", "date", "value"], skiprows=1)
+    df['num'] = list(range(1, len(df)+1))
+
+    df2 = pd.DataFrame()
+    df2['Well Name'] = df.agg(lambda x: f"Cr_obs{x['num']}", axis=1)
+    df2['Val'] = df['value'].round(3)
+    df2['Weight'] = 0     # Need to assign weight to value
+    df2['Group'] = 'Cr_obs'
+
+    # write to file
+    df2.to_csv('output/pst_ins/Cr_obs4pst.csv', index=False, sep='\t')
+    print(f'Nobs = {df2.shape[0]}\n')
+
+    # write to ins file
+    df_ins = pd.DataFrame(columns=['pif', '#'])
+    df_ins['#'] = df2['Well Name']
+    df_ins['pif'] = 'l1'
+    df_ins['#'] = df_ins.agg(
+        lambda x: f"[{x['#']}]40:48", axis=1)
+    df_ins2 = df_ins.astype(str).apply(lambda x: '   '.join(x), axis=1)
+    df_ins2.rename(' '.join(df_ins.columns)).to_csv(
+        ofile_ins, header=True, index=False)
+    return df2
+
 if __name__ == "__main__":
     # cwd c:\Users\hpham\OneDrive - INTERA Inc\projects\020_100BC\hpham\scripts\
 
@@ -446,7 +483,7 @@ if __name__ == "__main__":
     list_targets = ['Head_AWLN', 'Head_MAN', 'Delta_4-14',
                     'Delta_5-8', 'Delta_8-6', 'magn_AWLN', 'dirn_AWLN',
                     'Head_182B', '100C7_Vel', 'plm_vel', 'plm_dir',
-                    'dirn_SRC', 'dirn2_SRC', 'dirn3_SRC', 'dirn4_SRC', 'dirn_CRV']
+                    'dirn_SRC', 'dirn2_SRC', 'dirn3_SRC', 'dirn4_SRC', 'dirn_CRV', 'Cr_obs']
     ipst_2012_2014 = 'input/100BC_GWM_calib7b.pst'
     pst_obs_cols = ['Well Name', 'Val', 'Weight', 'Group']
 
@@ -477,12 +514,14 @@ if __name__ == "__main__":
     # velocity2               3.68                  3          100C7_Vel
     #   plmvel               1.00                  9            plm_vel
     #   plmdir              45.00               0.21            plm_dir
-    
     df_no_changes_group = pd.read_csv(ipst_2012_2014, skiprows=1930, sep=' ',
                                       nrows=4, skipinitialspace=True,
                                       names=pst_obs_cols)
     df_no_changes_group['Group'] = df_no_changes_group['Group'].str.replace("\t"," ").str.replace(" ","")     #fix plm_vel\t\t:
 
+    # [8] Cr_obs
+    df_Cr_obs = Cr_obs()
+    
     # Combine all groups
     df_dirn1 = df_dirn[df_dirn['Group'] == 'dirn_SRC']
     df_dirn2 = df_dirn[df_dirn['Group'] == 'dirn2_SRC']
@@ -492,17 +531,17 @@ if __name__ == "__main__":
     df_pst_final = pd.DataFrame(columns=pst_obs_cols)
     df_pst_final = pd.concat(
         [df_AWLN,  df_Head_MAN, df_delta, df_magn_AWLN, df_dirn_AWLN,
-         df_no_changes_group, df_dirn1, df_dirn2, df_dirn3_SRC, df_dirn4, df_CRV], axis=0)
+         df_no_changes_group, df_dirn1, df_dirn2, df_dirn3_SRC, df_dirn4, df_CRV, df_Cr_obs], axis=0)
 
     # Save to file
-    df_pst_final.to_csv('input/100BC_GWM_calib7b_par2.pst', header=False,
+    df_pst_final.to_csv('input/100BC_GWM_calib7b_par2_Cr.pst', header=False,
                         index=False, sep='\t')
 
     # Get pst file content before obs group
-    copyfile('input/100BC_GWM_calib7b_par1_org.pst',
-             'input/100BC_GWM_calib7b_par1.pst')
+    copyfile('input/100BC_GWM_calib7b_par1_org_Cr.pst',
+             'input/100BC_GWM_calib7b_par1_Cr.pst')
 
-    filename = 'input/100BC_GWM_calib7b_par1.pst'
+    filename = 'input/100BC_GWM_calib7b_par1_Cr.pst'
     n_new_obs = df_pst_final.shape[0]
     text_to_search = '2333'
     replacement_text = str(n_new_obs)
@@ -511,8 +550,8 @@ if __name__ == "__main__":
             print(line.replace(text_to_search, replacement_text), end='')
 
     # Combine three files
-    read_files = [f'input/100BC_GWM_calib7b_par{i+1}.pst' for i in range(3)]
-    with open("input/100BC_GWM_calib_2012_2020.pst", "wb") as outfile:
+    read_files = [f'input/100BC_GWM_calib7b_par{i+1}_Cr.pst' for i in range(3)]
+    with open("input/100BC_GWM_calib_2012_2020_Cr.pst", "wb") as outfile:
         for f in read_files:
             with open(f, "rb") as infile:
                 outfile.write(infile.read())
