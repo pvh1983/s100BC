@@ -17,10 +17,15 @@ df_Cr_comments = database[['SAMP_SITE_NAME', 'SAMP_DATE_TIME','STD_VALUE_RPTD',
                 'STD_ANAL_UNITS_RPTD','FILTERED_FLAG', 'LAB_QUALIFIER',
                 'REVIEW_QUALIFIER','SAMP_COMMENT', 'RESULT_COMMENT']]
 
-df_Cr = database[['SAMP_SITE_NAME', 'SAMP_DATE_TIME','STD_VALUE_RPTD']]
+df_Cr = database[['SAMP_SITE_NAME', 'SAMP_DATE_TIME','STD_VALUE_RPTD','REVIEW_QUALIFIER']]
 
 df_Cr['SAMP_DATE_TIME'] = pd.to_datetime(df_Cr['SAMP_DATE_TIME'])
 df_Cr['SAMP_DATE'] = df_Cr['SAMP_DATE_TIME'].dt.date
+
+color = {float('nan') : 'green', 'P': 'orange', 'Y':'orange', 'A':'grey', 'H':'orange', 'G':'green', 'PQ':'orange', 'Q':'orange',
+         'QP':'orange', 'R':'red', 'AP':'orange', 'APQ':'orange',
+       'AQ':'orange', 'PA':'orange'}
+df_Cr['color'] = df_Cr['REVIEW_QUALIFIER'].map(color)
 
 AWLN_wells = ['199-B2-14', '199-B3-46', '199-B3-47', '199-B3-50',
  '199-B3-51', '199-B4-7', '199-B4-8', '199-B4-14', '199-B4-16', 
@@ -35,15 +40,15 @@ df_Cr_AWLN = df_Cr_AWLN[(df_Cr_AWLN['SAMP_DATE_TIME'] >= datetime(2012, 1, 1))]
 plt.rc('xtick', labelsize=18)
 plt.rc('ytick', labelsize=18)
 
-wells = df_Cr['SAMP_SITE_NAME'].unique().tolist()
-
 for i, well in enumerate(AWLN_wells):
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10,5))
-    df = df_Cr[df_Cr['SAMP_SITE_NAME'] ==well]
+    df = df_Cr[df_Cr['SAMP_SITE_NAME'] == well]
     df = df[(df['SAMP_DATE_TIME'] <= datetime(2020, 9, 29))]
     df = df[(df['SAMP_DATE_TIME'] >= datetime(2012, 1, 1))]
-    ax.plot(df['SAMP_DATE_TIME'],df['STD_VALUE_RPTD'], 'o-', markersize=10, markeredgecolor='k', 
-                     color='steelblue', label = str(well), zorder=10)
+    ax.plot(df['SAMP_DATE_TIME'],df['STD_VALUE_RPTD'], '--', markersize=10, markeredgecolor='k', 
+               color='grey',  zorder=3)
+    ax.scatter(df['SAMP_DATE_TIME'],df['STD_VALUE_RPTD'], s=70, edgecolor='k',
+            c=df['color'], label = str(well), zorder=10)
     ax.axvline(x=pd.to_datetime('2012-01-01'), color = 'grey', zorder=2, alpha = 0.5)
     ax.axhline(y=2,color = 'r', linestyle='--', zorder=1, alpha = 0.5)
     ax.set_xlim(pd.to_datetime('2012-01-01'),pd.to_datetime('2020-09-30'))
@@ -53,10 +58,7 @@ for i, well in enumerate(AWLN_wells):
     ax.set_ylabel('Cr (VI) Concentration (ug/L)', fontweight='bold', fontsize=18)
     ax.set_xlabel('Date', fontweight='bold', fontsize=18)
     ax.grid(which='both', alpha = 0.5)
-    # if (well == '199-B5-2' or '199-B4-1'):
-        # plt.savefig('output/Cr_figures/Cr_' + well+'_manual_v2.png', bbox_inches='tight')  #needs fixing
-    # else:
-        # plt.savefig('output/Cr_figures/Cr_' + well+'_v2.png', bbox_inches='tight') 
+    # plt.savefig('output/Cr_figures/Cr_' + well+'_QC.png', bbox_inches='tight') 
 plt.show()
 
 #%% Together all the data
