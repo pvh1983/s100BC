@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Tue Mar 23 14:14:08 2021
+
+@author: MPedrazas
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Tue Dec 29 08:47:35 2020
 
 @author: MPedrazas
@@ -65,7 +72,7 @@ for i, well in enumerate(df_sim['WELLID'].unique()):
         ax.set_ylabel('Cr (VI) Concentration (ug/L)', fontweight='bold', fontsize=18)
         ax.set_xlabel('Date', fontweight='bold', fontsize=18)
         ax.grid(which='both', alpha = 0.5)
-        plt.savefig('output/Cr_figures/sim_vs_obs/Cr_' + str(well)+'-lay' + str(lay) + '.png', bbox_inches='tight') 
+        # plt.savefig('output/Cr_figures/sim_vs_obs/Cr_' + str(well)+'-lay' + str(lay) + '.png', bbox_inches='tight') 
         plt.show()
 
 #%% Now try plotting with UCN file

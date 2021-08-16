@@ -7,7 +7,9 @@ def rmse(predictions, targets):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
 res_2014 = '../../hpham/100BC_Calibration_model/PEST_version_7b_modified_2012-2014/master/100BC_GWM_calib7b.res'
-res_2020 = '../../hpham/100BC_Calibration_model/PEST_version_7b_modified_2012-2014/test7_chkobjfunc_newweigh/100BC_GWM_calib_2012_2020.res'
+# res_2020 = '../../hpham/100BC_Calibration_model/PEST_version_7b_modified_2012-2014/test7_chkobjfunc_newweigh/100BC_GWM_calib_2012_2020.res'
+# res_2020 = '../../hpham/100BC_Calibration_model/PEST_2012-2020/100BC_GWM_calib_2012_2020.res'
+res_2020 = 'input/100BC_GWM_calib_2012_2020.res'
 res_cols = ['Name', 'Group', 'Measured', 'Modelled','Residual','Weight', 'Weight*Measured','Weight*Modelled', 'Weight*Residual' , 'Measurement_sd', 'Natural_weight']
 df_2014 = pd.read_csv(res_2014 , skiprows =1 , names = res_cols)
 df_2020 = pd.read_csv(res_2020 , skiprows =1 , names = res_cols)
@@ -20,7 +22,8 @@ for i, res in enumerate(dfs):
     res = res.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
 
     df, mean_lst, rmse_lst, tmp_lst = [],[],[],[]
-    for group in (res['Group'].unique()): #['dirn_crv'] res['Group'].unique()[:-6]
+    
+    for group in (res['Group'].unique()): # res['Group'].unique()[:-6]
         if (('regul' in group) | ('head_182b' in group)):  # ignore the following target groups
             continue
         else:
@@ -43,4 +46,4 @@ for i, res in enumerate(dfs):
 
 stats_2014 = pd.DataFrame(final_lst)#.transpose()
 stats_2014 = stats_2014.rename(columns = {0:'Timespan', 1:'Group', 2:'Mean_Obs',3:'Mean_Sim',4:'RMSE',5:'MSE'})
-stats_2014.to_csv('output/statistics-res-file.csv',index=False)
+stats_2014.to_csv('output/statistics-res-file-new.csv',index=False)

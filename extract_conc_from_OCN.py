@@ -7,14 +7,10 @@ Created on Wed Dec 30 10:31:34 2020
 INPUT: STUFF.ocn --> output file from the TOB package of the transport model
 OUTPUT: STUFF.txt
 """
-import os
+# import os
 import pandas as pd
-import fileinput
-import csv
 
 def get_conc_from_OCN(ifile, ofile):
-    ifile = f'../../mpedrazas/Transport_Model/Transport/model1_clean/STUFF.ocn'
-    ofile = f'../../mpedrazas/Transport_Model/Transport/model1_clean/STUFF_MP.txt'
     src = ifile
     dst = ofile
     
@@ -54,13 +50,14 @@ def get_conc_from_OCN(ifile, ofile):
     temp = []
     for row in df.iterrows(): #loop through conc data
         for i,val in enumerate(sp_idx): #loop through SP line numbers
-            print(row[1].line_num)
+            # print(row[1].line_num)
             if i == (SP-1) and row[1].line_num > last_row:  #last rows, before: hard coded 12158 as line num
                 temp.append(SPdict[sp_idx[i]])
             elif i < (SP-1): #all other rows
                 if row[1].line_num >= sp_idx[i] and row[1].line_num < sp_idx[i+1]:
                     temp.append(SPdict[val])
     df['SP'] = temp
+    df.drop(axis=1, columns = ['line_num'], inplace=True)
     
     #Save conc data as csv
     df.to_csv(dst,index=False)
@@ -69,7 +66,7 @@ def get_conc_from_OCN(ifile, ofile):
     return df_check
 #%%
 if __name__ == "__main__":
-    ifile = f'../../mpedrazas/Transport_Model/Transport/model1_clean/STUFF.ocn'
-    ofile = f'../../mpedrazas/Transport_Model/Transport/model1_clean/STUFF_MP.txt'
+    ifile = '../../mpedrazas/Transport_Model/Transport/model1_clean/STUFF.ocn'
+    ofile = '../../mpedrazas/Transport_Model/Transport/model1_clean/STUFF_MP.txt'
     
     df = get_conc_from_OCN(ifile,ofile)
